@@ -66,7 +66,7 @@ function NavBar() {
                   </Link>
                 </li>
                 <li className='flex flex-col items-center  py-3'>
-                <button className="custom-button mb-4 w-full md:w-auto md:mb-0 text-sky-600 uppercase bg-gradient-to-r hover:bg-gradient-to-l from-white to-blue-300 p-3 font-semibold rounded-lg">Giriş Yap</button>
+                <a href='http://localhost:3005/login'className="custom-button mb-4 w-full md:w-auto md:mb-0 text-sky-600 uppercase bg-gradient-to-r hover:bg-gradient-to-l from-white to-blue-300 p-3 font-semibold rounded-lg">Giriş Yap</a>
                 </li>
               </ul>
             </div>
