@@ -7,7 +7,11 @@ import { GrFormPrevious } from "react-icons/gr";
 const Slider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const images = ['/slide1.png', '/slide2.jpg', '/slide3.jpg']; // Resim URL'lerini değiştirin
-  const slideTexts = ['Text for Slide 1', 'Text for Slide 2', 'Text for Slide 3'];
+  const slideTexts = [
+  'Haber 1', 
+  'Haber 2', 
+  'Haber 3'
+];
   
 
   const nextSlide = () => {
@@ -27,7 +31,7 @@ const Slider = () => {
       
       style={{ opacity: 0.8,filter: 'brightness(70%)'}}/>
 
-      {/* Text on the slide */}
+      {/* Slide metni */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-2xl font-bold">
           {slideTexts[currentIndex]}
         </div>
