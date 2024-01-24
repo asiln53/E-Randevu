@@ -28,6 +28,8 @@ function Home() {
   }, []);
   return (
     <Layout>
+      <h1 className="page-title">Doktorlar</h1>
+      <hr />
       <Row gutter={20}>
         {doctors.map((doctor) => (
           <Col span={8} xs={24} sm={24} lg={8}>

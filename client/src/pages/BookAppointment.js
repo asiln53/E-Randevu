@@ -44,7 +44,7 @@ function BookAppointment() {
     try {
       dispatch(showLoading());
       const response = await axios.post(
-        "/api/user/check-booking-avilability",
+        "/api/user/check-booking-availability",
         {
           doctorId: params.doctorId,
           date: date,
@@ -106,10 +106,10 @@ function BookAppointment() {
           <Row gutter={20} className="mt-5" align="middle">
             <Col span={8} sm={24} xs={24} lg={8}>
               <img
-                src="https://thumbs.dreamstime.com/b/finger-press-book-now-button-booking-reservation-icon-online-149789867.jpg"
+                src={require("../images/takvim.png")}
                 alt=""
                 width="100%"
-                height="400"
+                height="100%"
               />
             </Col>
             <Col span={8} sm={24} xs={24} lg={8}>

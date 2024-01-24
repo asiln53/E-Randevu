@@ -115,4 +115,47 @@ router.post("/change-appointment-status", authMiddleware, async (req, res) => {
   }
 });
 
+router.put("/cancel-appointment/:id", authMiddleware, async (req, res) => {
+  try {
+    const appointmentId = req.params.id;
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      { $set: { isActive: false, status: "İptal Edildi" } },
+      { new: true }
+    );
+
+    if (!updatedAppointment) {
+      return res.status(404).send({
+        message: "Randevu bulunamadı!",
+        success: false,
+      });
+    }
+
+    const user = await User.findOne({ _id: updatedAppointment.userId });
+
+    if (user) {
+      user.unseenNotifications.push({
+        type: "randevu-iptal",
+        message: "Randevu  iptal edildi.",
+        onClickPath: "/appointments",
+      });
+
+      await user.save();
+    }
+
+    res.status(200).send({
+      message: "Randevu iptal edildi",
+      success: true,
+      data: updatedAppointment,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Randevu iptal edilirken hata oluştu.",
+      success: false,
+      error,
+    });
+  }
+});
+
 module.exports = router;

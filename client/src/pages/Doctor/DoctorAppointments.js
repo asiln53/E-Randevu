@@ -4,7 +4,7 @@ import Layout from "../../components/Layout";
 import { showLoading, hideLoading } from "../../redux/alertsSlice";
 import { toast } from "react-hot-toast";
 import axios from "axios";
-import { Table, Tabs } from "antd";
+import { Button, Table, Tabs } from "antd";
 import moment from "moment";
 
 const { TabPane } = Tabs;
@@ -60,6 +60,32 @@ function DoctorAppointments() {
     }
   };
 
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      dispatch(showLoading());
+
+      const response = await axios.put(
+        `/api/doctor/cancel-appointment/${appointmentId}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      dispatch(hideLoading());
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+        getAppointmentsData();
+      } else {
+        toast.error("Randevu iptal edilemedi");
+      }
+    } catch (error) {
+      console.error(error);
+      dispatch(hideLoading());
+      toast.error("Randevu iptal edilemedi");
+    }
+  };
+
   const columns = [
     {
       title: "Randevu Id",
@@ -109,6 +135,11 @@ function DoctorAppointments() {
                 Red Et
               </h1>
             </div>
+          )}
+          {record.status === "Onaylandı" && (
+            <Button type="danger" onClick={() => cancelAppointment(record._id)}>
+              İptal Et
+            </Button>
           )}
         </div>
       ),

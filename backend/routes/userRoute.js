@@ -37,7 +37,6 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
-    const email = user.email;
 
     if (!user) {
       return res
@@ -66,7 +65,7 @@ router.post("/login", async (req, res) => {
       message: "Giriş Başarılı",
       success: true,
       token: token,
-      email: email,
+      email: user.email,
     });
   } catch (error) {
     console.log(error);
@@ -250,27 +249,63 @@ router.post("/book-appointment", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/check-booking-avilability", authMiddleware, async (req, res) => {
+router.post("/check-booking-availability", authMiddleware, async (req, res) => {
   try {
-    const date = moment(req.body.date, "DD-MM-YYYY").toISOString();
-    const fromTime = moment(req.body.time, "HH:mm")
-      .subtract(1, "hours")
-      .toISOString();
-    const toTime = moment(req.body.time, "HH:mm").add(1, "hours").toISOString();
+    const currentDate = moment();
+    const selectedDate = moment(req.body.date, "DD-MM-YYYY");
+
+    // Kontrol: Girilen tarih anlık tarihten eski mi?
+    if (selectedDate.isBefore(currentDate, "day")) {
+      return res.status(200).send({
+        message: "Geçmiş bir tarih seçemezsiniz.",
+        success: false,
+      });
+    }
+
+    const date = selectedDate.toISOString();
+    const selectedTime = moment(req.body.time, "HH:mm");
+    const fromTime = selectedTime.subtract(29, "minutes").toISOString();
+    const toTime = selectedTime.add(29, "minutes").toISOString();
     const doctorId = req.body.doctorId;
+
+    // Doktorun veritabanındaki başlangıç ve bitiş saatlerini al
+    const doctor = await Doctor.findOne({ _id: doctorId });
+    const startHour = doctor.timings[0];
+    const endHour = doctor.timings[1];
+
+    // Kontrol: Seçilen saat, doktorun çalışma saatleri içinde mi?
+    if (req.body.time < startHour || req.body.time >= endHour) {
+      return res.status(200).send({
+        message: "Seçilen saat, doktorun çalışma saatleri dışında.",
+        success: false,
+      });
+    }
+
+    // Kontrol: Seçilen saat, doktorun başlangıç veya bitiş saatinden küçük/büyük mü?
+    if (selectedTime.isBefore(startHour) || selectedTime.isAfter(endHour)) {
+      return res.status(200).send({
+        message:
+          "Seçilen saat, doktorun başlangıç veya bitiş saatinden önce veya sonra.",
+        success: false,
+      });
+    }
+
+    // Kontrol: Randevu uygunluğunu isActive özelliği ile kontrol et
     const appointments = await Appointment.find({
       doctorId,
       date,
       time: { $gte: fromTime, $lte: toTime },
+      isActive: true,
     });
+
     if (appointments.length > 0) {
       return res.status(200).send({
-        message: "Uygun değil! ",
+        message: "Uygun değil!",
         success: false,
       });
     } else {
       return res.status(200).send({
-        message: "Randevu ugyun.",
+        message: "Randevu uygun.",
         success: true,
       });
     }
@@ -336,162 +371,6 @@ router.put("/cancel-appointment/:id", authMiddleware, async (req, res) => {
     });
   }
 });
-
-// Belirli bir tarih için time slots oluşturacak yardımcı fonksiyon
-
-// router.post("/available-appointments", authMiddleware, async (req, res) => {
-//   try {
-//     const doctorId = req.body.doctorId;
-//     const date = moment(req.body.date, "DD-MM-YYYY").toISOString();
-
-//     // Doktorun bilgilerini al
-//     const doctor = await Doctor.findOne({ _id: doctorId });
-
-//     if (!doctor) {
-//       return res.status(404).send({
-//         message: "Doctor not found",
-//         success: false,
-//       });
-//     }
-
-//     // Doktorun çalışma saatlerini ve randevu süresini al
-//     const workingHours = doctor.timings;
-//     const maxAppointmentDuration = doctor.maxAppointmentDuration; // Maksimum randevu süresi dakika cinsinden
-
-//     // Available time slots'u oluştur
-//     const availableTimeSlots = await generateAvailableTimeSlots(
-//       workingHours,
-//       maxAppointmentDuration,
-//       date,
-//       doctorId
-//     );
-
-//     if (availableTimeSlots.length === 0) {
-//       return res.status(200).send({
-//         message: "No available time slots",
-//         success: false,
-//       });
-//     }
-
-//     return res.status(200).send({
-//       message: "Available time slots retrieved successfully",
-//       success: true,
-//       timeSlots: availableTimeSlots,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).send({
-//       message: "Error retrieving available time slots",
-//       success: false,
-//       error,
-//     });
-//   }
-// });
-
-// async function isTimeSlotAvailable(doctorId, date, startTime, endTime) {
-//   const existingAppointments = await Appointment.find({
-//     doctorId,
-//     date,
-//     $or: [
-//       { $and: [{ time: { $gte: startTime, $lt: endTime } }] },
-//       { $and: [{ time: { $lt: startTime }, endTime: { $gt: startTime } }] },
-//       { $and: [{ time: { $gte: startTime }, time: { $lt: endTime } }] },
-//       { $and: [{ time: { $lte: startTime }, endTime: { $gt: endTime } }] },
-//     ],
-//   });
-
-//   return existingAppointments.length === 0;
-// }
-
-// async function generateAvailableTimeSlots(
-//   workingHours,
-//   maxAppointmentDuration,
-//   date,
-//   doctorId
-// ) {
-//   const startTime = moment(`${date} ${workingHours[0]}`, "YYYY-MM-DD HH:mm");
-//   const endTime = moment(`${date} ${workingHours[1]}`, "YYYY-MM-DD HH:mm");
-//   const timeSlots = [];
-
-//   // Belirtilen saat aralığında time slots oluştur
-//   let currentTime = startTime.clone();
-
-//   while (currentTime.isBefore(endTime)) {
-//     const slotEndTime = currentTime
-//       .clone()
-//       .add(maxAppointmentDuration, "minutes");
-//     if (slotEndTime.isAfter(endTime)) {
-//       break;
-//     }
-
-//     // Kontrol etmek için bu saatte başka bir randevu var mı?
-//     const isSlotAvailable = await isTimeSlotAvailable(
-//       doctorId,
-//       date,
-//       currentTime.toISOString(),
-//       slotEndTime.toISOString()
-//     );
-
-//     if (isSlotAvailable) {
-//       timeSlots.push(currentTime.format("HH:mm"));
-//     }
-
-//     currentTime.add(maxAppointmentDuration, "minutes");
-//   }
-
-//   return timeSlots;
-// }
-
-// router.post("/book-appointment", authMiddleware, async (req, res) => {
-//   try {
-//     const doctorId = req.body.doctorId;
-//     const date = moment(req.body.date, "DD-MM-YYYY").toISOString();
-//     const time = moment(req.body.time, "HH:mm").toISOString();
-
-//     // Check if the selected time is available
-//     const isSlotAvailable = await Appointment.findOne({
-//       doctorId,
-//       date,
-//       time,
-//     });
-
-//     if (isSlotAvailable) {
-//       return res.status(200).send({
-//         message: "Selected time slot is not available",
-//         success: false,
-//       });
-//     }
-
-//     // Create a new appointment
-//     req.body.status = "pending";
-//     req.body.date = date;
-//     req.body.time = time;
-//     const newAppointment = new Appointment(req.body);
-
-//     await newAppointment.save();
-
-//     // Pushing notification to the doctor based on his userId
-//     const user = await User.findOne({ _id: req.body.doctorInfo.userId });
-//     user.unseenNotifications.push({
-//       type: "new-appointment-request",
-//       message: `A new appointment request has been made by ${req.body.userInfo.name}`,
-//       onClickPath: "/doctor/appointments",
-//     });
-//     await user.save();
-
-//     res.status(200).send({
-//       message: "Appointment booked successfully",
-//       success: true,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).send({
-//       message: "Error booking appointment",
-//       success: false,
-//       error,
-//     });
-//   }
-// });
 
 router.get("/get-appointments-by-user-id", authMiddleware, async (req, res) => {
   try {
