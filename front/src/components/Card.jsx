@@ -8,9 +8,9 @@ import doktor2 from '../pages/doktor2'
 import doktor3 from '../pages/doktor3'
 
 const cards = [
-  { name: 'Kart 1', uzmanlik: 'Uzman Doktor', content: 'açıklama', image: '/doktor1.jpg' },
-  { name: 'Kart 2', uzmanlik: 'Uzman Doktor', content: 'açıklama', image: '/doktor2.jpg' },
-  { name: 'Kart 3', uzmanlik: 'Uzman Doktor', content: 'açıklama', image: '/doktor3.jpg' },
+  { name: 'Ayşe Levent', uzmanlik: 'Uzman Doktor', content: 'HEMATOLOJİ', image: '/doktor1.jpg' },
+  { name: 'Abdullah Ercan', uzmanlik: 'profesör doktor', content: 'KARDİYOLOJİ', image: '/doktor2.jpg' },
+  { name: 'Mehmet Tan', uzmanlik: 'Uzman Doktor', content: 'NÖROLOJİ', image: '/doktor3.jpg' },
 ];
 
 const Card = () => {
